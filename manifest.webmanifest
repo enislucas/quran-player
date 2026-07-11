@@ -1,7 +1,7 @@
 {
-  "name": "Quran",
-  "short_name": "Quran",
-  "lang": "en",
+  "name": "Coran",
+  "short_name": "Coran",
+  "lang": "ro",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
