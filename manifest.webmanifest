@@ -1,8 +1,7 @@
 {
-  "name": "القرآن الكريم",
-  "short_name": "القرآن",
-  "lang": "ar",
-  "dir": "rtl",
+  "name": "Quran",
+  "short_name": "Quran",
+  "lang": "en",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

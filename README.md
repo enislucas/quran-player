@@ -1,6 +1,6 @@
 # Quran Player
 
-A tiny, simple web app made for my grandmother, who can't really operate a phone. It has just two giant buttons: one plays **Surah Yaseen**, and one plays the **complete Quran** (four recordings stitched together so it feels like one continuous recitation). Whichever one she uses, the app remembers exactly where playback stopped and picks up again from there (just a few seconds earlier, so nothing is missed) the next time it's opened. No menus, no searching, no accounts — just tap and listen.
+A tiny, simple web app made for my grandmother, who can't really operate a phone. It has just two giant buttons: one plays **Surah Yaseen**, and one plays the **complete Quran** (four recordings stitched together so it feels like one continuous recitation). Tap a button once to start playing; tap the same button again to pause. Whichever one she uses, the app remembers exactly where playback stopped and picks up again from there (just a few seconds earlier, so nothing is missed) the next time it's opened. No menus, no searching, no accounts — just tap and listen.
 
 ## How to put it online (GitHub Pages)
 
@@ -52,6 +52,7 @@ After this, an icon appears on the home screen just like any other app. Tapping 
 
 - **Internet is required to play** — the audio streams live from YouTube, so the phone needs a working internet or Wi-Fi connection.
 - **Resume position is saved on the phone itself**, separately for each button (Yaseen and the complete Quran), updated every few seconds while something is playing.
+- **Leaving the app pauses playback** — the position is saved the moment the app goes to the background, so reopening it continues from the same spot.
 - **The screen is kept awake while playing** so the audio doesn't get interrupted. For long listening sessions, it's best to keep the phone plugged into its charger. If the phone's power button is pressed to turn the screen off, YouTube will pause the audio — this is a limitation of YouTube itself, not a bug in the app.
 - **When a recitation finishes completely**, the app resets back to the beginning and stops, ready to be played again from the start next time.
 
@@ -62,11 +63,11 @@ The list of videos lives near the top of the `<script>` section inside `index.ht
 ```js
 const CONTENT = {
   yaseen: {
-    title: 'سورة يس',
+    title: 'Surah Yaseen',
     videos: ['CrmJL_hLA9U'],
   },
   quran: {
-    title: 'القرآن كاملاً',
+    title: 'Full Quran',
     videos: ['3E6iTiXAY90', 'DnkwOoBaXBo', 'p7coOkhBZGk', 'XNsqEdtfWTY'],
   },
 };
