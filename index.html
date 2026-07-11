@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0f3d2e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="القرآن">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<title>القرآن الكريم</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  font-family:"Segoe UI",Tahoma,"Noto Naskh Arabic",Arial,sans-serif;
+  background:#f5efe3;color:#222;
+  touch-action:manipulation;
+  -webkit-user-select:none;user-select:none;
+}
+.hidden{display:none !important}
+.screen{
+  min-height:100vh;min-height:100dvh;
+  display:flex;flex-direction:column;gap:18px;
+  padding:18px;
+  padding-top:calc(18px + env(safe-area-inset-top));
+  padding-bottom:calc(18px + env(safe-area-inset-bottom));
+}
+.app-title{text-align:center;font-size:clamp(34px,9vw,50px);color:#0f3d2e;padding:6px 0}
+.big-btn{
+  flex:1;min-height:200px;border:none;border-radius:28px;color:#fff;
+  font-family:inherit;font-weight:800;font-size:clamp(40px,12vw,68px);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;
+  box-shadow:0 8px 0 rgba(0,0,0,.28);cursor:pointer;
+}
+.big-btn:active{transform:translateY(5px);box-shadow:0 3px 0 rgba(0,0,0,.28)}
+.big-btn .emoji{font-size:1.4em;line-height:1}
+.big-btn .sub{font-size:.34em;font-weight:400;opacity:.9;letter-spacing:.5px}
+.btn-yaseen{background:#0e6b4e}
+.btn-quran{background:#8a5b12}
+.topbar{display:flex;align-items:center;gap:12px}
+.back-btn{
+  border:none;border-radius:18px;background:#54443a;color:#fff;
+  font-family:inherit;font-size:clamp(26px,7vw,34px);font-weight:700;
+  padding:16px 22px;min-height:72px;cursor:pointer;
+  box-shadow:0 5px 0 rgba(0,0,0,.25);
+}
+.back-btn:active{transform:translateY(3px);box-shadow:0 2px 0 rgba(0,0,0,.25)}
+.now-title{flex:1;text-align:center;font-size:clamp(28px,7.5vw,38px);font-weight:800;color:#0f3d2e}
+.part-label{text-align:center;font-size:clamp(24px,6vw,30px);color:#555;font-weight:700}
+.video-box{width:100%;background:#000;border-radius:16px;overflow:hidden;height:56vw}
+@supports (aspect-ratio:16/9){.video-box{height:auto;aspect-ratio:16/9}}
+.video-box iframe{width:100%;height:100%;display:block;border:0}
+.msg{text-align:center;font-size:clamp(26px,7vw,34px);color:#8c2f1b;padding:8px;font-weight:800}
+.play-btn{
+  flex:1;min-height:190px;border:none;border-radius:28px;color:#fff;
+  font-family:inherit;font-weight:800;font-size:clamp(42px,13vw,70px);
+  cursor:pointer;box-shadow:0 8px 0 rgba(0,0,0,.28);
+}
+.play-btn:active{transform:translateY(5px);box-shadow:0 3px 0 rgba(0,0,0,.28)}
+.play-btn.is-paused{background:#0e6b4e}
+.play-btn.is-playing{background:#a63d2a}
+.offline{
+  position:fixed;top:0;left:0;right:0;z-index:50;
+  background:#a63d2a;color:#fff;text-align:center;
+  font-size:24px;font-weight:800;padding:12px;
+  padding-top:calc(12px + env(safe-area-inset-top));
+}
+</style>
+</head>
+<body>
+
+<div id="offline" class="offline hidden">لا يوجد اتصال بالإنترنت</div>
+
+<main id="home" class="screen">
+  <h1 class="app-title">القرآن الكريم</h1>
+  <button id="btnYaseen" class="big-btn btn-yaseen">
+    <span class="emoji">📖</span>
+    <span>سورة يس</span>
+    <span class="sub">Surah Yaseen</span>
+  </button>
+  <button id="btnQuran" class="big-btn btn-quran">
+    <span class="emoji">🕋</span>
+    <span>القرآن كاملاً</span>
+    <span class="sub">Full Quran</span>
+  </button>
+</main>
+
+<main id="playerScreen" class="screen hidden">
+  <div class="topbar">
+    <button id="btnBack" class="back-btn">🏠 الرئيسية</button>
+    <div id="nowTitle" class="now-title"></div>
+  </div>
+  <div id="partLabel" class="part-label hidden"></div>
+  <div id="videoBox" class="video-box"></div>
+  <div id="msg" class="msg hidden"></div>
+  <button id="btnPlay" class="play-btn is-paused">▶ تشغيل</button>
+</main>
+
+<script>
+// ==========================================================
+//  EDIT YOUR YOUTUBE VIDEOS HERE
+//  Each entry is a YouTube video ID: the part after watch?v=
+// ==========================================================
+const CONTENT = {
+  yaseen: {
+    title: 'سورة يس',
+    videos: ['CrmJL_hLA9U'],
+  },
+  quran: {
+    title: 'القرآن كاملاً',
+    videos: ['3E6iTiXAY90', 'DnkwOoBaXBo', 'p7coOkhBZGk', 'XNsqEdtfWTY'],
+  },
+};
+const RESUME_REWIND_SECONDS = 5;
+const SAVE_INTERVAL_MS = 5000;
+
+const $ = (id) => document.getElementById(id);
+const homeEl = $('home'), playerScreenEl = $('playerScreen');
+const btnPlay = $('btnPlay'), msgEl = $('msg'), partEl = $('partLabel'), titleEl = $('nowTitle');
+
+let apiReady = false;
+let pending = null;            // {key, start} when a button is tapped before the API loads
+let player = null;
+let currentKey = null;
+let currentIndex = 0;
+let lastState = -1;
+let saveTimer = null;
+let wakeLock = null;
+let consecutiveErrors = 0;
+let errorTimer = null;
+
+// ---------- progress memory ----------
+function storageId(key){ return 'quran-progress-' + key; }
+function loadProgress(key){
+  try {
+    const p = JSON.parse(localStorage.getItem(storageId(key)));
+    const cfg = CONTENT[key];
+    // p.v ties the saved position to a specific video ID, so editing the
+    // CONTENT lists later resets stale progress instead of seeking into
+    // the wrong recording.
+    if (p && Number.isFinite(p.i) && Number.isFinite(p.t) && p.i >= 0 && p.t >= 0 &&
+        p.i < cfg.videos.length && (!p.v || p.v === cfg.videos[p.i])) return p;
+  } catch (e) {}
+  return { i: 0, t: 0 };
+}
+function saveProgress(key, i, t){
+  try {
+    localStorage.setItem(storageId(key), JSON.stringify({ i: i, t: t, v: CONTENT[key].videos[i], at: Date.now() }));
+  } catch (e) {}
+}
+function saveNow(){
+  if (!player || !currentKey) return;
+  if (lastState === YT.PlayerState.ENDED) return; // end-of-video progress is saved explicitly
+  try {
+    const t = player.getCurrentTime();
+    if (Number.isFinite(t) && t > 0) saveProgress(currentKey, currentIndex, t);
+  } catch (e) {}
+}
+function startSaveLoop(){ stopSaveLoop(); saveTimer = setInterval(saveNow, SAVE_INTERVAL_MS); }
+function stopSaveLoop(){ if (saveTimer) { clearInterval(saveTimer); saveTimer = null; } }
+
+// ---------- wake lock: keep the screen on while playing ----------
+async function keepAwake(){
+  if (!('wakeLock' in navigator)) return;
+  try {
+    if (!wakeLock) {
+      wakeLock = await navigator.wakeLock.request('screen');
+      wakeLock.addEventListener('release', () => { wakeLock = null; });
+    }
+  } catch (e) {}
+}
+function releaseWake(){
+  if (wakeLock) { try { wakeLock.release(); } catch (e) {} wakeLock = null; }
+}
+
+// ---------- UI ----------
+function showScreen(which){
+  homeEl.classList.toggle('hidden', which !== 'home');
+  playerScreenEl.classList.toggle('hidden', which !== 'player');
+}
+function setPlayingUI(playing){
+  btnPlay.classList.toggle('is-playing', playing);
+  btnPlay.classList.toggle('is-paused', !playing);
+  btnPlay.textContent = playing ? '⏸ إيقاف' : '▶ تشغيل';
+}
+function showMsg(text){ msgEl.textContent = text; msgEl.classList.remove('hidden'); }
+function hideMsg(){ msgEl.classList.add('hidden'); }
+function updatePartLabel(){
+  const cfg = CONTENT[currentKey];
+  if (!cfg || cfg.videos.length < 2) { partEl.classList.add('hidden'); return; }
+  partEl.textContent = 'الجزء ' + (currentIndex + 1) + ' من ' + cfg.videos.length;
+  partEl.classList.remove('hidden');
+}
+
+// ---------- player lifecycle ----------
+function createPlayer(videoId, startSeconds){
+  destroyPlayer(false);
+  const holder = document.createElement('div');
+  holder.id = 'yt';
+  $('videoBox').appendChild(holder);
+  const vars = {
+    autoplay: 1,
+    start: Math.max(0, Math.floor(startSeconds || 0)),
+    playsinline: 1,
+    rel: 0,
+    fs: 0,
+    iv_load_policy: 3,
+    controls: 1,
+  };
+  if (location.protocol.indexOf('http') === 0) vars.origin = location.origin;
+  player = new YT.Player('yt', {
+    width: '100%',
+    height: '100%',
+    videoId: videoId,
+    playerVars: vars,
+    events: {
+      onReady: (e) => { try { e.target.playVideo(); } catch (err) {} },
+      onStateChange: onPlayerStateChange,
+      onError: onPlayerError,
+    },
+  });
+}
+function destroyPlayer(save){
+  if (errorTimer) { clearTimeout(errorTimer); errorTimer = null; }
+  if (save) saveNow();
+  stopSaveLoop();
+  releaseWake();
+  if (player) { try { player.destroy(); } catch (e) {} player = null; }
+  const box = $('videoBox');
+  while (box.firstChild) box.removeChild(box.firstChild);
+  lastState = -1;
+}
+
+function onPlayerStateChange(e){
+  lastState = e.data;
+  const S = YT.PlayerState;
+  if (e.data === S.PLAYING) {
+    consecutiveErrors = 0;
+    hideMsg();
+    setPlayingUI(true);
+    startSaveLoop();
+    keepAwake();
+  } else if (e.data === S.BUFFERING) {
+    setPlayingUI(true);
+  } else if (e.data === S.PAUSED || e.data === S.CUED) {
+    setPlayingUI(false);
+    stopSaveLoop();
+    saveNow();
+    releaseWake();
+  } else if (e.data === S.ENDED) {
+    stopSaveLoop();
+    handleEnded();
+  }
+}
+
+function handleEnded(){
+  const cfg = CONTENT[currentKey];
+  if (!cfg) return;
+  if (currentIndex < cfg.videos.length - 1) {
+    // next part of the Quran, seamlessly
+    currentIndex++;
+    saveProgress(currentKey, currentIndex, 0);
+    updatePartLabel();
+    player.loadVideoById(cfg.videos[currentIndex]);
+  } else {
+    // everything finished: reset memory to the beginning and stop
+    currentIndex = 0;
+    saveProgress(currentKey, 0, 0);
+    updatePartLabel();
+    setPlayingUI(false);
+    releaseWake();
+    try { player.cueVideoById(cfg.videos[0]); } catch (e) {}
+  }
+}
+
+function onPlayerError(e){
+  showMsg('تعذّر التشغيل — تأكدي من الاتصال بالإنترنت');
+  const cfg = CONTENT[currentKey];
+  if (!cfg) return;
+  consecutiveErrors++;
+  // Skip forward past a broken part, but never wrap around from the last
+  // part: wrapping would erase the saved position for the whole sequence.
+  if (currentIndex < cfg.videos.length - 1 && consecutiveErrors < cfg.videos.length) {
+    clearTimeout(errorTimer);
+    errorTimer = setTimeout(() => {
+      errorTimer = null;
+      if (!player || !currentKey) return;
+      currentIndex++;
+      saveProgress(currentKey, currentIndex, 0);
+      updatePartLabel();
+      try { player.loadVideoById(cfg.videos[currentIndex]); } catch (err) {}
+    }, 4000);
+  }
+}
+
+// ---------- navigation ----------
+function openChapter(key){
+  currentKey = key;
+  const cfg = CONTENT[key];
+  const p = loadProgress(key);
+  currentIndex = Math.min(p.i, cfg.videos.length - 1);
+  const start = Math.max(0, p.t - RESUME_REWIND_SECONDS);
+  titleEl.textContent = cfg.title;
+  hideMsg();
+  setPlayingUI(false);
+  updatePartLabel();
+  showScreen('player');
+  if (!apiReady) {
+    pending = { key: key, start: start };
+    if (!navigator.onLine) showMsg('لا يوجد اتصال بالإنترنت');
+    else showMsg('جارٍ التحميل…');
+    injectApi(); // retry in case the first API script request failed
+    return;
+  }
+  createPlayer(cfg.videos[currentIndex], start);
+}
+
+$('btnYaseen').addEventListener('click', () => openChapter('yaseen'));
+$('btnQuran').addEventListener('click', () => openChapter('quran'));
+$('btnBack').addEventListener('click', () => {
+  destroyPlayer(true);
+  currentKey = null;
+  pending = null;
+  showScreen('home');
+});
+btnPlay.addEventListener('click', () => {
+  if (!player || typeof player.getPlayerState !== 'function') return;
+  const S = YT.PlayerState;
+  const s = player.getPlayerState();
+  if (s === S.PLAYING || s === S.BUFFERING) player.pauseVideo();
+  else player.playVideo();
+});
+
+// ---------- save on close / background ----------
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') {
+    saveNow();
+  } else if (player && lastState === YT.PlayerState.PLAYING) {
+    keepAwake();
+  }
+});
+window.addEventListener('pagehide', saveNow);
+
+// ---------- YouTube API loading ----------
+window.onYouTubeIframeAPIReady = function(){
+  apiReady = true;
+  if (pending) {
+    const p = pending;
+    pending = null;
+    if (currentKey === p.key) createPlayer(CONTENT[p.key].videos[currentIndex], p.start);
+  }
+};
+function injectApi(){
+  if (window.YT && window.YT.Player) { window.onYouTubeIframeAPIReady(); return; }
+  if (document.getElementById('yt-api')) return;
+  const s = document.createElement('script');
+  s.id = 'yt-api';
+  s.src = 'https://www.youtube.com/iframe_api';
+  s.onerror = () => { s.remove(); };
+  document.head.appendChild(s);
+}
+injectApi();
+
+window.addEventListener('online', () => {
+  $('offline').classList.add('hidden');
+  if (!apiReady) injectApi();
+});
+window.addEventListener('offline', () => { $('offline').classList.remove('hidden'); });
+if (!navigator.onLine) $('offline').classList.remove('hidden');
+
+if ('serviceWorker' in navigator && location.protocol === 'https:') {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+</script>
+</body>
+</html>
