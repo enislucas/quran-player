@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0a1024">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Namaz">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<title>Namaz Vakti</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+/* the type here is already huge on purpose; opting out of Android's system
+   text scaling keeps the last prayers from being pushed off the screen */
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+html,body{min-height:100%}
+body{
+  font-family:"Segoe UI",Tahoma,Arial,sans-serif;
+  background:#0a1024;
+  color:#f6f3ea;
+  -webkit-user-select:none;user-select:none;
+  overflow-x:hidden;
+}
+/* soft light behind everything, so the screen itself feels lit */
+body::before{
+  content:'';position:fixed;inset:0;z-index:0;
+  background:radial-gradient(120% 60% at 50% 0%,#1d2c57 0%,#131c3c 45%,#0a1024 100%);
+}
+.screen{
+  position:relative;z-index:1;
+  /* min-height, not height: if anything ever does not fit, the page can be
+     scrolled rather than silently cutting the last prayers off */
+  min-height:100vh;min-height:100dvh;
+  display:flex;flex-direction:column;
+  padding:14px 16px;
+  padding-top:calc(14px + env(safe-area-inset-top));
+  padding-bottom:calc(14px + env(safe-area-inset-bottom));
+}
+
+/* ---------- the aura: current prayer window ---------- */
+.now{
+  position:relative;
+  flex:0 0 auto;
+  border-radius:30px;
+  padding:clamp(16px,4.5vw,28px) 18px;
+  text-align:center;
+  background:linear-gradient(165deg,rgba(255,205,110,.16),rgba(255,180,70,.05) 60%,rgba(255,255,255,.02));
+  border:2px solid rgba(255,206,120,.55);
+  box-shadow:0 0 46px 10px rgba(255,186,74,.30), inset 0 0 34px rgba(255,196,90,.14);
+  animation:aura 4.5s ease-in-out infinite;
+}
+@keyframes aura{
+  0%,100%{box-shadow:0 0 40px 6px rgba(255,186,74,.26), inset 0 0 30px rgba(255,196,90,.12);
+          border-color:rgba(255,206,120,.48)}
+  50%    {box-shadow:0 0 78px 20px rgba(255,186,74,.52), inset 0 0 40px rgba(255,196,90,.20);
+          border-color:rgba(255,220,150,.85)}
+}
+/* wider halo bleeding outside the card */
+.now::after{
+  content:'';position:absolute;inset:-26px;border-radius:52px;z-index:-1;
+  background:radial-gradient(closest-side,rgba(255,186,74,.26),rgba(255,186,74,0) 100%);
+  animation:halo 4.5s ease-in-out infinite;
+}
+@keyframes halo{0%,100%{opacity:.55;transform:scale(.97)}50%{opacity:1;transform:scale(1.03)}}
+
+.now.waiting{
+  border-color:rgba(150,175,230,.45);
+  background:linear-gradient(165deg,rgba(150,180,235,.12),rgba(120,150,220,.04));
+  box-shadow:0 0 34px 4px rgba(120,160,235,.22), inset 0 0 26px rgba(140,175,235,.10);
+  animation:none;
+}
+.now.waiting::after{background:radial-gradient(closest-side,rgba(120,160,235,.18),rgba(120,160,235,0));animation:none;opacity:.8;transform:none}
+
+.label{
+  font-size:clamp(13px,3.6vw,17px);letter-spacing:.22em;font-weight:700;
+  color:#ffd489;opacity:.95;
+}
+.now.waiting .label{color:#a9c1f0}
+.name{
+  font-size:clamp(40px,13vw,66px);font-weight:800;line-height:1.05;margin-top:6px;
+  color:#fff8e8;
+}
+.name-alt{
+  font-size:clamp(21px,6.4vw,32px);font-weight:600;color:#ffd489;opacity:.92;margin-top:2px;
+}
+.now.waiting .name-alt{color:#a9c1f0}
+.now.loading .name{font-size:clamp(24px,7vw,38px)}
+.window{
+  font-size:clamp(30px,9.6vw,50px);font-weight:800;margin-top:clamp(8px,2.4vw,14px);
+  font-variant-numeric:tabular-nums;letter-spacing:.01em;color:#fff;
+}
+.window .arrow{color:#ffc76b;padding:0 .12em;font-weight:600}
+.now.waiting .window .arrow{color:#9fb8ea}
+.left{
+  font-size:clamp(16px,4.6vw,23px);font-weight:600;margin-top:6px;color:#e7ddc6;opacity:.85;
+}
+
+/* ---------- separator ---------- */
+.divider{
+  flex:0 0 auto;height:2px;border:0;margin:clamp(14px,3.4vw,22px) 4px clamp(10px,2.4vw,16px);
+  background:linear-gradient(90deg,rgba(255,206,120,0),rgba(255,206,120,.55),rgba(255,206,120,0));
+}
+
+/* ---------- today's five prayers ---------- */
+.date{
+  flex:0 0 auto;text-align:center;
+  font-size:clamp(18px,5.2vw,25px);font-weight:700;color:#cdd8f0;
+  margin-bottom:clamp(6px,1.8vw,12px);
+}
+.list{flex:1 1 auto;display:flex;flex-direction:column;justify-content:space-evenly;gap:2px;min-height:0}
+.row{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:clamp(6px,1.7vw,12px) clamp(10px,3vw,16px);
+  border-radius:16px;border:1.5px solid transparent;
+}
+.row .who{display:flex;flex-direction:column;line-height:1.1;text-align:left}
+.row .p1{font-size:clamp(19px,5.6vw,27px);font-weight:700;color:#f6f3ea}
+.row .p2{font-size:clamp(14px,4.1vw,20px);font-weight:600;color:#9fb0d4}
+.row .win{
+  font-size:clamp(19px,5.9vw,28px);font-weight:700;font-variant-numeric:tabular-nums;
+  color:#e9e2d0;white-space:nowrap;
+}
+.row.active{
+  background:linear-gradient(90deg,rgba(255,190,80,.20),rgba(255,190,80,.07));
+  border-color:rgba(255,206,120,.65);
+  box-shadow:0 0 26px rgba(255,186,74,.30);
+}
+.row.active .p1,.row.active .win{color:#fff6e2}
+.row.active .p2{color:#ffd489}
+.row.next{border-color:rgba(150,180,235,.45);background:rgba(140,175,235,.08)}
+
+/* short screens (a phone held in the browser, with its address bar showing) */
+@media (max-height:640px){
+  .name{font-size:clamp(30px,10vw,44px)}
+  .name-alt{font-size:clamp(18px,5.4vw,24px)}
+  .window{font-size:clamp(24px,8vw,36px)}
+  .row .p1{font-size:clamp(16px,4.8vw,22px)}
+  .row .p2{font-size:clamp(12px,3.6vw,16px)}
+  .row .win{font-size:clamp(16px,5vw,22px)}
+  .divider{margin:8px 4px 6px}
+}
+@media (prefers-reduced-motion:reduce){
+  .now,.now::after{animation:none}
+}
+</style>
+</head>
+<body>
+
+<main class="screen">
+  <section class="now" id="now">
+    <div class="label" id="label">ACUM</div>
+    <div class="name" id="name">—</div>
+    <div class="name-alt" id="nameAlt">—</div>
+    <div class="window" id="window">—</div>
+    <div class="left" id="left"></div>
+  </section>
+
+  <hr class="divider">
+
+  <div class="date" id="date">—</div>
+  <div class="list" id="list"></div>
+</main>
+
+<script>
+const TZ = 'Europe/Bucharest';
+const DATA_URL = 'times.json';
+// Fajr ends at sunrise; Asr (standard, not Hanafi) ends at Maghrib;
+// Isha runs until the next Fajr. Sunrise is a boundary, never a row.
+const PRAYERS = [
+  { id: 'fajr',    ar: 'Fajr',    tr: 'Sabah',  from: 'fajr',    to: 'sunrise' },
+  { id: 'dhuhr',   ar: 'Dhuhr',   tr: 'Öğle',   from: 'dhuhr',   to: 'asr' },
+  { id: 'asr',     ar: 'Asr',     tr: 'İkindi', from: 'asr',     to: 'maghrib' },
+  { id: 'maghrib', ar: 'Maghrib', tr: 'Akşam',  from: 'maghrib', to: 'isha' },
+  { id: 'isha',    ar: 'Isha',    tr: 'Yatsı',  from: 'isha',    to: 'fajr+1' },
+];
+
+const $ = (id) => document.getElementById(id);
+const fmtTime = new Intl.DateTimeFormat('ro-RO', { timeZone: TZ, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
+const fmtDate = new Intl.DateTimeFormat('ro-RO', { timeZone: TZ, weekday: 'long', day: 'numeric', month: 'long' });
+const fmtYMD  = new Intl.DateTimeFormat('en-CA', { timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit' });
+
+let DATA = null;
+let lastPaint = '';
+
+// ---------- dates ----------
+// The civil date in Romania, regardless of how the phone's clock is configured.
+function civil(when) {
+  const [y, m, d] = fmtYMD.format(when).split('-').map(Number);
+  return { y, m, d };
+}
+function shiftDay(c, delta) {
+  const t = new Date(Date.UTC(c.y, c.m - 1, c.d + delta));
+  return { y: t.getUTCFullYear(), m: t.getUTCMonth() + 1, d: t.getUTCDate() };
+}
+const pad2 = (n) => String(n).padStart(2, '0');
+
+// times.json stores minutes after 00:00 UTC, so local time (and daylight
+// saving) is resolved here, correctly, for whatever year it happens to be.
+function entryFor(c) {
+  if (!DATA) return null;
+  const days = DATA.days;
+  let e = days[pad2(c.m) + '-' + pad2(c.d)];
+  if (!e && c.m === 2 && c.d === 29) e = days['02-28'];
+  return e || null;
+}
+function momentsFor(c) {
+  const e = entryFor(c);
+  if (!e) return null;
+  const at = (mins) => new Date(Date.UTC(c.y, c.m - 1, c.d, 0, mins));
+  return { fajr: at(e.fajr), sunrise: at(e.sunrise), dhuhr: at(e.dhuhr), asr: at(e.asr), maghrib: at(e.maghrib), isha: at(e.isha) };
+}
+
+// ---------- what is happening right now ----------
+function stateAt(now) {
+  const today = civil(now);
+  const t = momentsFor(today);
+  if (!t) return null;
+  const prev = momentsFor(shiftDay(today, -1));
+  const next = momentsFor(shiftDay(today, 1));
+
+  if (prev && now < t.fajr)  return { active: 'isha',    start: prev.isha, end: t.fajr };
+  if (now < t.sunrise)       return { active: 'fajr',    start: t.fajr,    end: t.sunrise };
+  // between sunrise and dhuhr no prayer window is open
+  if (now < t.dhuhr)         return { waiting: 'dhuhr',  start: t.sunrise, end: t.dhuhr };
+  if (now < t.asr)           return { active: 'dhuhr',   start: t.dhuhr,   end: t.asr };
+  if (now < t.maghrib)       return { active: 'asr',     start: t.asr,     end: t.maghrib };
+  if (now < t.isha)          return { active: 'maghrib', start: t.maghrib, end: t.isha };
+  if (next)                  return { active: 'isha',    start: t.isha,    end: next.fajr };
+  return null;
+}
+
+function humanGap(ms) {
+  const total = Math.floor(ms / 60000);
+  if (total < 1) return 'mai puțin de un minut';
+  const h = Math.floor(total / 60), m = total % 60;
+  if (h === 0) return m + (m === 1 ? ' minut' : ' minute');
+  if (m === 0) return h + (h === 1 ? ' oră' : ' ore');
+  return h + ' h ' + m + ' min';
+}
+const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+
+// ---------- painting ----------
+function paint() {
+  const now = new Date();
+  const st = DATA ? stateAt(now) : null;
+  if (!st) {
+    // never leave her looking at placeholder dashes with no explanation
+    if (lastPaint === 'waiting-for-data') return;
+    lastPaint = 'waiting-for-data';
+    $('now').className = 'now waiting loading';
+    $('label').textContent = 'NAMAZ VAKTI';
+    $('name').textContent = 'Se încarcă…';
+    $('nameAlt').textContent = '';
+    $('window').textContent = '';
+    $('left').textContent = '';
+    $('date').textContent = '';
+    $('list').innerHTML = '';
+    return;
+  }
+
+  const today = civil(now);
+  const t = momentsFor(today);
+  const next = momentsFor(shiftDay(today, 1));
+  const id = st.active || st.waiting;
+  const p = PRAYERS.find((x) => x.id === id);
+
+  const rows = PRAYERS.map((x) => {
+    const start = t[x.from];
+    const end = x.to === 'fajr+1' ? (next ? next.fajr : null) : t[x.to];
+    return { x, start, end };
+  });
+
+  // repaint only when something visible actually changed
+  const stamp = [id, st.active ? 'a' : 'w', +st.start, +st.end,
+                 Math.floor((st.end - now) / 60000), today.y, today.m, today.d].join('|');
+  if (stamp === lastPaint) return;
+  lastPaint = stamp;
+
+  $('now').className = 'now' + (st.waiting ? ' waiting' : '');
+  $('label').textContent = st.waiting ? 'URMEAZĂ' : 'ACUM';
+  $('name').textContent = p.ar;
+  $('nameAlt').textContent = p.tr;
+
+  if (st.waiting) {
+    $('window').innerHTML = 'începe la <b>' + fmtTime.format(st.end) + '</b>';
+    $('left').textContent = 'peste ' + humanGap(st.end - now);
+  } else {
+    $('window').innerHTML = fmtTime.format(st.start) + '<span class="arrow">→</span>' + fmtTime.format(st.end);
+    $('left').textContent = 'se termină peste ' + humanGap(st.end - now);
+  }
+
+  $('date').textContent = cap(fmtDate.format(now));
+
+  const list = $('list');
+  list.innerHTML = '';
+  for (const r of rows) {
+    const el = document.createElement('div');
+    el.className = 'row' + (st.active === r.x.id ? ' active' : (st.waiting === r.x.id ? ' next' : ''));
+    const who = document.createElement('div');
+    who.className = 'who';
+    who.innerHTML = '<span class="p1">' + r.x.ar + '</span><span class="p2">' + r.x.tr + '</span>';
+    const win = document.createElement('div');
+    win.className = 'win';
+    win.textContent = r.end ? fmtTime.format(r.start) + ' – ' + fmtTime.format(r.end) : fmtTime.format(r.start);
+    el.appendChild(who); el.appendChild(win);
+    list.appendChild(el);
+  }
+}
+
+// ---------- data, kept fresh ----------
+// Always bounded, always validated: a hung connection must not leave the
+// screen empty, and a wifi portal's login page must not be taken for data.
+async function fetchTimes(opts, timeoutMs) {
+  const r = await Promise.race([
+    fetch(DATA_URL, opts),
+    new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), timeoutMs)),
+  ]);
+  if (!r.ok) throw new Error('http ' + r.status);
+  if (!(r.headers.get('content-type') || '').includes('json')) throw new Error('not json');
+  const j = await r.json();
+  if (!j || !j.days) throw new Error('no days');
+  return j;
+}
+async function loadData(preferNetwork) {
+  if (preferNetwork) {
+    try { DATA = await fetchTimes({ cache: 'no-store' }, 5000); lastPaint = ''; paint(); return; }
+    catch (e) { /* offline or unusable: fall through to the cached copy */ }
+  }
+  if (DATA) return;
+  try { DATA = await fetchTimes({}, 8000); lastPaint = ''; paint(); } catch (e) {}
+}
+
+// ---------- stay up to date without anyone touching anything ----------
+let lastCheck = 0;
+function checkForUpdates() {
+  const now = Date.now();
+  if (now - lastCheck < 60000) return;
+  lastCheck = now;
+  loadData(true);
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistration().then((reg) => { if (reg) reg.update(); }).catch(() => {});
+  }
+}
+
+loadData(true);
+paint();
+setInterval(paint, 1000);
+setInterval(checkForUpdates, 15 * 60 * 1000);
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') { lastPaint = ''; paint(); checkForUpdates(); }
+});
+window.addEventListener('online', checkForUpdates);
+
+if ('serviceWorker' in navigator && location.protocol === 'https:') {
+  let controlled = !!navigator.serviceWorker.controller;
+  let reloading = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    const wasControlled = controlled;
+    controlled = true;
+    // first visit: a worker simply took charge, nothing changed on screen.
+    // afterwards: a newer version took over -> show it (nothing to interrupt)
+    if (!wasControlled || reloading) return;
+    reloading = true;
+    location.reload();
+  });
+  navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).catch(() => {});
+}
+</script>
+</body>
+</html>
