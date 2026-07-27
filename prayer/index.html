@@ -110,6 +110,8 @@ body::before{
   font-size:clamp(18px,5.2vw,25px);font-weight:700;color:#cdd8f0;
   margin-bottom:clamp(6px,1.8vw,12px);
 }
+.date .place{color:#ffd489;font-weight:800;letter-spacing:.06em}
+.date .place::before{content:'·';color:#6c7ea6;padding:0 .45em}
 .list{flex:1 1 auto;display:flex;flex-direction:column;justify-content:space-evenly;gap:2px;min-height:0}
 .row{
   display:flex;align-items:center;justify-content:space-between;gap:10px;
@@ -242,9 +244,24 @@ function humanGap(ms) {
 }
 const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 
+// ---------- clock safety net ----------
+// Her phone ought to have the right time, but if it ever does not, every
+// single thing on this screen would be wrong. So whenever the network can be
+// reached we compare her clock against the server's and remember the
+// difference. Offline we keep using the last difference we learned, which is
+// exactly the case that matters: a clock that is wrong is usually wrong in
+// the same way tomorrow.
+const CLOCK_KEY = 'prayer-clock-offset';
+let clockOffset = 0;
+try {
+  const stored = parseFloat(localStorage.getItem(CLOCK_KEY));
+  if (Number.isFinite(stored) && Math.abs(stored) < 3153600000000) clockOffset = stored;
+} catch (e) {}
+function rightNow() { return new Date(Date.now() + clockOffset); }
+
 // ---------- painting ----------
 function paint() {
-  const now = new Date();
+  const now = rightNow();
   const st = DATA ? stateAt(now) : null;
   if (!st) {
     // never leave her looking at placeholder dashes with no explanation
@@ -256,7 +273,7 @@ function paint() {
     $('nameAlt').textContent = '';
     $('window').textContent = '';
     $('left').textContent = '';
-    $('date').textContent = '';
+    $('date').innerHTML = '<span class="place">Mangalia</span>';
     $('list').innerHTML = '';
     return;
   }
@@ -292,7 +309,7 @@ function paint() {
     $('left').textContent = 'se termină peste ' + humanGap(st.end - now);
   }
 
-  $('date').textContent = cap(fmtDate.format(now));
+  $('date').innerHTML = cap(fmtDate.format(now)) + '<span class="place">Mangalia</span>';
 
   const list = $('list');
   list.innerHTML = '';
@@ -333,6 +350,31 @@ async function loadData(preferNetwork) {
   try { DATA = await fetchTimes({}, 8000); lastPaint = ''; paint(); } catch (e) {}
 }
 
+// Ask the server what time it is and remember how far off the phone is.
+// A HEAD request is used deliberately: the service worker ignores anything
+// that is not a GET, so this can never be answered from the cache with a
+// stale Date header. Offline it simply fails and we keep the known offset.
+async function syncClock() {
+  try {
+    const t0 = Date.now();
+    const r = await Promise.race([
+      fetch('./?t=' + t0, { method: 'HEAD', cache: 'no-store' }),
+      new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 5000)),
+    ]);
+    const header = r.headers.get('date');
+    if (!header) return;
+    const server = Date.parse(header);
+    if (!Number.isFinite(server) || server < 1735689600000) return;   // implausible: ignore
+    const t1 = Date.now();
+    const offset = server + (t1 - t0) / 2 - t1;   // allow for the round trip
+    if (Math.abs(offset - clockOffset) < 30000) return;   // close enough, leave it alone
+    clockOffset = offset;
+    try { localStorage.setItem(CLOCK_KEY, String(offset)); } catch (e) {}
+    lastPaint = '';
+    paint();
+  } catch (e) { /* offline: carry on with the offset we already learned */ }
+}
+
 // ---------- stay up to date without anyone touching anything ----------
 let lastCheck = 0;
 function checkForUpdates() {
@@ -340,12 +382,14 @@ function checkForUpdates() {
   if (now - lastCheck < 60000) return;
   lastCheck = now;
   loadData(true);
+  syncClock();
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.getRegistration().then((reg) => { if (reg) reg.update(); }).catch(() => {});
   }
 }
 
 loadData(true);
+syncClock();
 paint();
 setInterval(paint, 1000);
 setInterval(checkForUpdates, 15 * 60 * 1000);

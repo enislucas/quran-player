@@ -18,6 +18,17 @@ There are no buttons and nothing to tap — it is purely a display that updates 
 
 The app's own interface is in Romanian, since that's what she reads.
 
+## The clock
+
+Everything on screen depends on the phone knowing what time it is, so the app
+does not simply trust it. Whenever it can reach the network it compares the
+phone's clock against the server's (a `HEAD` request, read from the response's
+`Date` header) and stores the difference in `localStorage`. That difference is
+applied to every calculation, and it keeps being applied while offline — which
+is the case that matters, since a clock that is wrong is usually wrong the same
+way tomorrow. If the phone's clock is fine, the offset stays at zero and
+nothing changes. No network, no problem: the last known offset is reused.
+
 ## Prayer window rules
 
 These are deliberate choices baked into the app:
