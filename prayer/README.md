@@ -26,8 +26,15 @@ phone's clock against the server's (a `HEAD` request, read from the response's
 `Date` header) and stores the difference in `localStorage`. That difference is
 applied to every calculation, and it keeps being applied while offline — which
 is the case that matters, since a clock that is wrong is usually wrong the same
-way tomorrow. If the phone's clock is fine, the offset stays at zero and
-nothing changes. No network, no problem: the last known offset is reused.
+way tomorrow. If the phone's clock is fine, the difference stays at zero and
+nothing changes.
+
+It re-measures on **every** open and every return to the app, never throttled,
+because the clock may have been changed between two openings. And a stored
+difference is only trusted while the phone's clock keeps running forwards: if
+it now reads *earlier* than when the measurement was taken, the clock itself
+was changed, the old difference would push a good clock wrong, and it is thrown
+away. Anything unreadable in storage is ignored the same way.
 
 ## Prayer window rules
 

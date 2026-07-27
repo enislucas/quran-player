@@ -254,8 +254,14 @@ const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 const CLOCK_KEY = 'prayer-clock-offset';
 let clockOffset = 0;
 try {
-  const stored = parseFloat(localStorage.getItem(CLOCK_KEY));
-  if (Number.isFinite(stored) && Math.abs(stored) < 3153600000000) clockOffset = stored;
+  const stored = JSON.parse(localStorage.getItem(CLOCK_KEY));
+  // What we learned is only believable while her clock keeps running
+  // forwards. If it now reads EARLIER than when we measured it, the clock
+  // itself was changed — someone corrected it, or the phone re-synced — and
+  // the old correction would now push a good clock wrong. Throw it away.
+  if (stored && Number.isFinite(stored.o) && Number.isFinite(stored.at) && Date.now() >= stored.at) {
+    clockOffset = stored.o;
+  }
 } catch (e) {}
 function rightNow() { return new Date(Date.now() + clockOffset); }
 
@@ -367,11 +373,11 @@ async function syncClock() {
     if (!Number.isFinite(server) || server < 1735689600000) return;   // implausible: ignore
     const t1 = Date.now();
     const offset = server + (t1 - t0) / 2 - t1;   // allow for the round trip
-    if (Math.abs(offset - clockOffset) < 30000) return;   // close enough, leave it alone
-    clockOffset = offset;
-    try { localStorage.setItem(CLOCK_KEY, String(offset)); } catch (e) {}
-    lastPaint = '';
-    paint();
+    const moved = Math.abs(offset - clockOffset) >= 30000;   // ignore network jitter
+    if (moved) clockOffset = offset;
+    // written even when nothing moved, so the "measured at" stamp stays fresh
+    try { localStorage.setItem(CLOCK_KEY, JSON.stringify({ o: clockOffset, at: Date.now() })); } catch (e) {}
+    if (moved) { lastPaint = ''; paint(); }
   } catch (e) { /* offline: carry on with the offset we already learned */ }
 }
 
@@ -394,7 +400,9 @@ paint();
 setInterval(paint, 1000);
 setInterval(checkForUpdates, 15 * 60 * 1000);
 document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'visible') { lastPaint = ''; paint(); checkForUpdates(); }
+  // re-check the time on every single return to the app, never throttled:
+  // between two openings the clock may have been changed under our feet
+  if (document.visibilityState === 'visible') { lastPaint = ''; paint(); syncClock(); checkForUpdates(); }
 });
 window.addEventListener('online', checkForUpdates);
 
