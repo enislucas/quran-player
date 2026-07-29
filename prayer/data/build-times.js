@@ -1,7 +1,14 @@
 /*
- * Builds prayer/times.json from mangalia-prayer-times-365.md
+ * Builds prayer/times.json for the prayer app.
  *
  *   node prayer/data/build-times.js
+ *
+ * Sources, in order of precedence:
+ *   1. mangalia-diyanet-<year>.json  — a whole year published by Diyanet,
+ *      downloaded by fetch-year.js. This is the ground truth.
+ *   2. mangalia-prayer-times-365.md  — the Diyanet PDF sheets, typed up by
+ *      hand. Covers whatever the yearly feed happens to be missing.
+ *   3. a calibrated solar model      — only for days neither source has.
  *
  * Why this script exists
  * ----------------------
@@ -146,6 +153,30 @@ for (const r of rows) {
   official.set(key, { ut, year, month: r.month, day: r.day });
 }
 
+// ------------------------------------------- official whole years (ground truth)
+// Anything Diyanet has published for a full year outranks the typed-up sheets.
+const FEED_FIELDS = ['imsak', 'gunes', 'ogle', 'ikindi', 'aksam', 'yatsi'];
+let fromFeed = 0, feedYears = [];
+for (const file of fs.readdirSync(HERE).filter((n) => /^mangalia-diyanet-\d{4}\.json$/.test(n)).sort()) {
+  const feed = JSON.parse(fs.readFileSync(path.join(HERE, file), 'utf8'));
+  feedYears.push(feed.year);
+  for (const [key, times] of Object.entries(feed.days)) {
+    const mo = +key.slice(0, 2), dy = +key.slice(3);
+    const off = offsetHours(feed.year, mo, dy) * 60;
+    const ut = {};
+    KEYS.forEach((k, i) => {
+      const t = times[FEED_FIELDS[i]];
+      if (!/^\d{2}:\d{2}$/.test(t || '')) throw new Error(`bad time "${t}" on ${key} in ${file}`);
+      ut[k] = +t.slice(0, 2) * 60 + +t.slice(3) - off;      // -> minutes UTC
+    });
+    for (let i = 1; i < KEYS.length; i++) {
+      if (ut[KEYS[i]] <= ut[KEYS[i - 1]]) throw new Error(`non-monotonic times on ${key} in ${file}`);
+    }
+    official.set(key, { ut, year: feed.year, month: mo, day: dy });
+    fromFeed++;
+  }
+}
+
 // --------------------------------------------------------------- calibrate
 // Fit a depression angle + constant offset per prayer against the official
 // days; the offsets absorb Diyanet's "temkin" safety margins.
@@ -239,6 +270,8 @@ console.log(`fitted fajr angle ${PARAMS.fajrAngle}deg  isha angle ${PARAMS.ishaA
 for (const k of KEYS) {
   console.log(`  ${k.padEnd(8)} offset ${String(OFFSETS[k]).padStart(6)} min   residual sd ${report[k].sd.toFixed(2)} min`);
 }
+console.log(`sources: ${fromFeed} days from the Diyanet ${feedYears.join('/')} feed, `
+          + `${nOfficial - fromFeed} more from the PDF sheets, ${nComputed} computed`);
 console.log(`days: ${nOfficial} official + ${nComputed} computed = ${Object.keys(days).length}`);
 
 // seam continuity: a computed day next to an official day must line up

@@ -57,28 +57,40 @@ time she opens the app.
 ## Prayer times data
 
 `prayer/times.json` is generated, not hand-written. Do not edit it directly.
+Generator: `node prayer/data/build-times.js`. Sources, in precedence order:
 
-- Source of truth: `prayer/data/mangalia-prayer-times-365.md` — Diyanet
-  (Namaz Vaktim) sheets for **Mangalia only**, one row per calendar day,
-  year-agnostic.
-- Generator: `node prayer/data/build-times.js`
+1. `prayer/data/mangalia-diyanet-<year>.json` — **a whole year published by
+   Diyanet**, downloaded by `node prayer/data/fetch-year.js`. Ground truth.
+2. `prayer/data/mangalia-prayer-times-365.md` — the Diyanet PDF sheets typed up
+   by hand; covers whatever the yearly feed is missing.
+3. A calibrated solar model — only for days neither source has.
 
-The generator exists because the raw sheets have two problems it fixes:
+Currently **365 of 366 days are official Diyanet data**; only 29 February is
+computed (Diyanet publishes a year at a time and 2026 is not a leap year).
+Each day is tagged `src: "d"` (Diyanet) or `src: "c"` (computed).
 
-1. They store **local clock times**, which break whenever daylight saving moves
-   to a different calendar date in a different year. Everything is converted to
-   **UTC** using the offset that was really in force on the source date, and the
-   app re-applies the current year's Romanian rules via `Europe/Bucharest`. This
-   is verified: all 176 official days re-render exactly, and the spring switch
-   lands correctly on 30 Mar 2025, 29 Mar 2026, 28 Mar 2027.
-2. Only **176 of 366** days are covered. The rest are computed with a solar model
-   calibrated against the official days (residual sd < 1 minute; fitted angles
-   18.05° Fajr / 16.6° Isha, standard Asr). Each day is tagged `src: "d"`
-   (Diyanet sheet) or `src: "c"` (computed), so real data always wins.
+The generator exists because the raw times need two fixes:
 
-**When new sheets arrive:** paste the new rows into the markdown table (replacing
-the `N/A`s), re-run the generator, bump `CACHE_VERSION` in `prayer/sw.js`, push.
-The computed days for those dates are replaced by the official ones automatically.
+1. They are **local clock times**, which break whenever daylight saving moves to
+   a different calendar date in a different year. Everything is converted to
+   **UTC** using the offset really in force on its source date, and the app
+   re-applies the current year's Romanian rules via `Europe/Bucharest`. Verified:
+   all 2184 values of the 2026 feed re-render exactly, and the spring switch
+   lands correctly on 30 Mar 2025, 29 Mar 2026, 28 Mar 2027, 26 Mar 2028.
+2. Gaps must never reach her screen, hence the model fallback (residual sd
+   ~1 minute; fitted 18.05° Fajr / 16° Isha, standard Asr).
+
+**Once a year, when Diyanet publishes the next one:**
+
+```
+node prayer/data/fetch-year.js 2027     # refuses a partial year
+node prayer/data/build-times.js
+```
+
+then bump `CACHE_VERSION` in `prayer/sw.js`, commit and push. Mangalia is Diyanet
+district **15952**; there is no way to get years further ahead — they are simply
+not published yet. Hand-typed sheets can still be pasted into the markdown table
+for anything a feed is missing.
 
 Prayer window rules used (deliberate choices, do not "fix" them):
 Fajr ends at **sunrise**; Asr is the **standard** opinion, not Hanafi, and runs

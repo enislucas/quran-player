@@ -56,33 +56,32 @@ It's built by running:
 node prayer/data/build-times.js
 ```
 
-which reads `prayer/data/mangalia-prayer-times-365.md`, a table holding official Diyanet (Namaz Vaktim) sheets for Mangalia.
+The times themselves come from a full year published by Diyanet itself, downloaded with `node prayer/data/fetch-year.js`, which writes `prayer/data/mangalia-diyanet-2026.json`. Mangalia is Diyanet district **15952** ([its page](https://namazvakitleri.diyanet.gov.tr/en-US/15952/mangalia-prayer-time)).
 
-The generator fixes two problems with the raw sheets:
+The builder draws on three sources, in order of precedence:
 
-1. **Daylight saving.** The sheets store local clock times, which break when daylight saving falls on a different calendar date in a different year. To fix this, every time is stored as UTC and converted back to local time using Romania's current DST rules — so the spring switch correctly lands on 30 March 2025, 29 March 2026, and 28 March 2027.
-2. **Missing days.** The sheets only cover 176 of the 366 days in a year. The remaining days are computed with a solar model calibrated against the official days, accurate to better than one minute. Each day in the output is tagged `d` (from a Diyanet sheet) or `c` (computed) — and official data always wins over computed data.
+1. The downloaded Diyanet year.
+2. The hand-typed PDF sheets in `prayer/data/mangalia-prayer-times-365.md`, for anything the year is missing.
+3. A calibrated solar model, for any day neither source has.
 
-All times are specifically for Mangalia and have been verified astronomically against that location.
+Right now that means **365 of the 366 days are official Diyanet data**. The only computed day is **29 February**, because Diyanet publishes one calendar year at a time and 2026 is not a leap year. Each day in the output is tagged `d` (Diyanet) or `c` (computed) — official data always wins over computed data.
 
-## Adding new official sheets when they arrive
+The downloaded feed was checked against the older hand-typed sheets: all 192 overlapping values matched exactly, confirming it's the same underlying source. And all 2184 values in the 2026 feed re-render exactly after the UTC conversion below.
 
-1. Paste the new rows into the table in `prayer/data/mangalia-prayer-times-365.md`, replacing the `N/A` entries for those dates. Columns are:
+The generator's other job is fixing a problem the raw published times have: **daylight saving.** They're published as local clock times, which break when daylight saving falls on a different calendar date in a different year. To fix this, every time is stored as UTC and converted back to local time using Romania's current DST rules — so the spring switch correctly lands on 30 March 2025, 29 March 2026, 28 March 2027, and 26 March 2028.
 
-   ```
-   Date | İmsak (Fajr) | Güneş (Sunrise) | Öğle (Dhuhr) | İkindi (Asr) | Akşam (Maghrib) | Yatsı (Isha) | Src
-   ```
+## Refreshing once a year
 
-   `Src` is the year the sheet came from — this matters because it determines which daylight-saving offset applies.
+Diyanet publishes a year at a time, usually late in the preceding year — future years can't be fetched early. Roughly once a year, once the next year is published, run:
 
-2. Run:
+```
+node prayer/data/fetch-year.js 2027
+node prayer/data/build-times.js
+```
 
-   ```
-   node prayer/data/build-times.js
-   ```
+then bump `CACHE_VERSION` in `prayer/sw.js`, commit and push.
 
-3. Bump `CACHE_VERSION` in `prayer/sw.js`.
-4. Commit and push.
+`fetch-year.js` refuses to write a partial year, and will tell you which years are actually published. If a feed is ever missing days, hand-typed sheets can still be pasted into the markdown table to fill the gap.
 
 ## How updates reach her phone
 
@@ -110,4 +109,4 @@ The times are good for years, not just the current one, because `times.json` is 
 | `sw.js` | Service worker: offline support + self-update |
 | `manifest.webmanifest` | PWA manifest |
 | `icon-192.png`, `icon-512.png`, `apple-touch-icon.png` | App icons |
-| `data/` | The markdown source sheet and the generator script (`build-times.js`) |
+| `data/` | The markdown source sheet, `fetch-year.js` (downloads a published Diyanet year), `mangalia-diyanet-2026.json` (the downloaded year), and the generator script (`build-times.js`) |
