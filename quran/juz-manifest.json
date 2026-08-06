@@ -1,0 +1,280 @@
+{
+    "generatedAtUtc":  "2026-08-06T12:20:52.4232500Z",
+    "reciter":  "Mahmoud Khalil Al-Husary",
+    "source":  "Existing 44-file Quran recording, losslessly cut at acoustically verified canonical Juz boundaries",
+    "sourceFiles":  "audio/quran-001.m4a through audio/quran-044.m4a",
+    "encoding":  "mono AAC, 32 kHz, approximately 40 kbps (stream copy; no re-encoding)",
+    "totalBytes":  795848971,
+    "juz":  [
+                {
+                    "juz":  1,
+                    "firstVerse":  "1:1",
+                    "lastVerse":  "2:141",
+                    "encodedDurationSeconds":  4918.944,
+                    "bytes":  25408776,
+                    "sha256":  "0B6BF9D2DA1104567CD7F0220DE03ABA8272CBE2794F5AB2C7CF9A99D6478DA0",
+                    "file":  "audio/juz-001.m4a"
+                },
+                {
+                    "juz":  2,
+                    "firstVerse":  "2:142",
+                    "lastVerse":  "2:252",
+                    "encodedDurationSeconds":  5200.288,
+                    "bytes":  26873274,
+                    "sha256":  "94ADA07388FE9B240D9BE4DBFD132E0AAD4A7FEBAA29D791AAFB61EE6E8DFFB5",
+                    "file":  "audio/juz-002.m4a"
+                },
+                {
+                    "juz":  3,
+                    "firstVerse":  "2:253",
+                    "lastVerse":  "3:92",
+                    "encodedDurationSeconds":  4961.44,
+                    "bytes":  25651470,
+                    "sha256":  "2A5CEB557DFE4577F7AE92F7BA1B8919CC42C70557023E1F8B7B6572F21FB2C2",
+                    "file":  "audio/juz-003.m4a"
+                },
+                {
+                    "juz":  4,
+                    "firstVerse":  "3:93",
+                    "lastVerse":  "4:23",
+                    "encodedDurationSeconds":  5136.832,
+                    "bytes":  26531442,
+                    "sha256":  "9BE98EEE7877F24ACC623E03FB6EF967B9FD5AD4CF8F7212685F4B249C11C69E",
+                    "file":  "audio/juz-004.m4a"
+                },
+                {
+                    "juz":  5,
+                    "firstVerse":  "4:24",
+                    "lastVerse":  "4:147",
+                    "encodedDurationSeconds":  4566.976,
+                    "bytes":  23770871,
+                    "sha256":  "0FCBE7CCD9D4A74E4B5348EDC58D4AD3721E2B3F848C6BBF8A9D530AA59B5265",
+                    "file":  "audio/juz-005.m4a"
+                },
+                {
+                    "juz":  6,
+                    "firstVerse":  "4:148",
+                    "lastVerse":  "5:81",
+                    "encodedDurationSeconds":  4949.792,
+                    "bytes":  25616322,
+                    "sha256":  "104B104EA7AA0994777AA5905F1239BD61E14D4252FC2A1AC31ED9B868B570D2",
+                    "file":  "audio/juz-006.m4a"
+                },
+                {
+                    "juz":  7,
+                    "firstVerse":  "5:82",
+                    "lastVerse":  "6:110",
+                    "encodedDurationSeconds":  5518.496,
+                    "bytes":  28562951,
+                    "sha256":  "CC09439ACC8CBFAF281AB240FC6D91305141548C79C4E954BF1AC2FE807F898B",
+                    "file":  "audio/juz-007.m4a"
+                },
+                {
+                    "juz":  8,
+                    "firstVerse":  "6:111",
+                    "lastVerse":  "7:87",
+                    "encodedDurationSeconds":  5265.423,
+                    "bytes":  27225398,
+                    "sha256":  "407C35FF15D732963749A48344BF1D193BAC5DB573C3054288671676ADD3D89A",
+                    "file":  "audio/juz-008.m4a"
+                },
+                {
+                    "juz":  9,
+                    "firstVerse":  "7:88",
+                    "lastVerse":  "8:40",
+                    "encodedDurationSeconds":  4802.112,
+                    "bytes":  24955376,
+                    "sha256":  "82A8ACC6E0EB5465DCA2AB1B9B45BB853FF705960668793B0B740901C73EAD51",
+                    "file":  "audio/juz-009.m4a"
+                },
+                {
+                    "juz":  10,
+                    "firstVerse":  "8:41",
+                    "lastVerse":  "9:92",
+                    "encodedDurationSeconds":  5049.312,
+                    "bytes":  26230031,
+                    "sha256":  "05496CAE92400885380F78E9BE5F67020137DC7D2B5B8355FB3059297898748A",
+                    "file":  "audio/juz-010.m4a"
+                },
+                {
+                    "juz":  11,
+                    "firstVerse":  "9:93",
+                    "lastVerse":  "11:5",
+                    "encodedDurationSeconds":  5181.312,
+                    "bytes":  26943434,
+                    "sha256":  "6140E8EA0F96CD107D1C38D91E9166CA0054637581C3480AC9A657FFC721D34B",
+                    "file":  "audio/juz-011.m4a"
+                },
+                {
+                    "juz":  12,
+                    "firstVerse":  "11:6",
+                    "lastVerse":  "12:52",
+                    "encodedDurationSeconds":  4857.952,
+                    "bytes":  25194270,
+                    "sha256":  "931C0B425FB89BB103F082290539B1A2A715D9235BAFB3FD73A63782F311C062",
+                    "file":  "audio/juz-012.m4a"
+                },
+                {
+                    "juz":  13,
+                    "firstVerse":  "12:53",
+                    "lastVerse":  "14:52",
+                    "encodedDurationSeconds":  4981.92,
+                    "bytes":  25859792,
+                    "sha256":  "3685BA65B42B86A79F760C55DCB2BBCF2E695AEE4D2BFA0C63146411D5DBCC3E",
+                    "file":  "audio/juz-013.m4a"
+                },
+                {
+                    "juz":  14,
+                    "firstVerse":  "15:1",
+                    "lastVerse":  "16:128",
+                    "encodedDurationSeconds":  4858.336,
+                    "bytes":  25168808,
+                    "sha256":  "C4257ECE4495F0556DA70ADBA6E0DE9ECD1549BF1A15ABBF7F05BF58B382A1E0",
+                    "file":  "audio/juz-014.m4a"
+                },
+                {
+                    "juz":  15,
+                    "firstVerse":  "17:1",
+                    "lastVerse":  "18:74",
+                    "encodedDurationSeconds":  5271.776,
+                    "bytes":  27289190,
+                    "sha256":  "7CC441A0A72DBD313AAA99E65B4CF8B919FDE5BDDF7A0E3DD2820F88DCF12508",
+                    "file":  "audio/juz-015.m4a"
+                },
+                {
+                    "juz":  16,
+                    "firstVerse":  "18:75",
+                    "lastVerse":  "20:135",
+                    "encodedDurationSeconds":  4407.212,
+                    "bytes":  22974502,
+                    "sha256":  "A4683A7A8B04E25B3377FC5547CB5C92BF9000AEAF9CD5755342358EB5C74D92",
+                    "file":  "audio/juz-016.m4a"
+                },
+                {
+                    "juz":  17,
+                    "firstVerse":  "21:1",
+                    "lastVerse":  "22:78",
+                    "encodedDurationSeconds":  4159.072,
+                    "bytes":  21554252,
+                    "sha256":  "9BF626625F0E9F4A4C702BD1FF753DEA47CCC03FDBC0522AE10D1F5AD5B725E9",
+                    "file":  "audio/juz-017.m4a"
+                },
+                {
+                    "juz":  18,
+                    "firstVerse":  "23:1",
+                    "lastVerse":  "25:20",
+                    "encodedDurationSeconds":  5373.28,
+                    "bytes":  27862453,
+                    "sha256":  "10079F2EF560104F1510EC643EE5954E0D8EBE474278EB983B1125BAF9BA0F99",
+                    "file":  "audio/juz-018.m4a"
+                },
+                {
+                    "juz":  19,
+                    "firstVerse":  "25:21",
+                    "lastVerse":  "27:55",
+                    "encodedDurationSeconds":  5709.376,
+                    "bytes":  29622592,
+                    "sha256":  "51BD4257324FDA68ADCB7683B809A681D48A870E9C4A77E26002B562DFBB4D44",
+                    "file":  "audio/juz-019.m4a"
+                },
+                {
+                    "juz":  20,
+                    "firstVerse":  "27:56",
+                    "lastVerse":  "29:45",
+                    "encodedDurationSeconds":  5506.048,
+                    "bytes":  28521268,
+                    "sha256":  "3931BEEC44FA545C2C2221F872689B3433CBBC6C0CACEA1C62A0285ACF535A7F",
+                    "file":  "audio/juz-020.m4a"
+                },
+                {
+                    "juz":  21,
+                    "firstVerse":  "29:46",
+                    "lastVerse":  "33:30",
+                    "encodedDurationSeconds":  5239.936,
+                    "bytes":  27173938,
+                    "sha256":  "469E38C898583FC6183FBD22E21648B9F45BE52F8A247B37F6FA36CA270382AC",
+                    "file":  "audio/juz-021.m4a"
+                },
+                {
+                    "juz":  22,
+                    "firstVerse":  "33:31",
+                    "lastVerse":  "36:27",
+                    "encodedDurationSeconds":  4930.56,
+                    "bytes":  25541370,
+                    "sha256":  "36183F3A1120EE6FBE08B63B34FA97ECA6D888C7CC621D2390B663DA2EDDC6F5",
+                    "file":  "audio/juz-022.m4a"
+                },
+                {
+                    "juz":  23,
+                    "firstVerse":  "36:28",
+                    "lastVerse":  "39:31",
+                    "encodedDurationSeconds":  5624.761,
+                    "bytes":  29270079,
+                    "sha256":  "CBF9EFC6C913D0B810BA6F5897F2E3DE16333E42F9D87E541020387382DE8165",
+                    "file":  "audio/juz-023.m4a"
+                },
+                {
+                    "juz":  24,
+                    "firstVerse":  "39:32",
+                    "lastVerse":  "41:46",
+                    "encodedDurationSeconds":  4849.12,
+                    "bytes":  25108802,
+                    "sha256":  "866C9A08AC9831EE4ABCD72BFFE092C2DA8F70D11760D7415B40CC2F4138A799",
+                    "file":  "audio/juz-024.m4a"
+                },
+                {
+                    "juz":  25,
+                    "firstVerse":  "41:47",
+                    "lastVerse":  "45:37",
+                    "encodedDurationSeconds":  5783.104,
+                    "bytes":  29880060,
+                    "sha256":  "B00BBF949674053470D220A2FAD69E709C8F55B8D1B3EC1B4DB2D19D628375A2",
+                    "file":  "audio/juz-025.m4a"
+                },
+                {
+                    "juz":  26,
+                    "firstVerse":  "46:1",
+                    "lastVerse":  "51:30",
+                    "encodedDurationSeconds":  5203.584,
+                    "bytes":  26888770,
+                    "sha256":  "8E505E3E04B8F55FE1B80E4B777ABF446340A0D8C26002F67038E434D103D165",
+                    "file":  "audio/juz-026.m4a"
+                },
+                {
+                    "juz":  27,
+                    "firstVerse":  "51:31",
+                    "lastVerse":  "57:29",
+                    "encodedDurationSeconds":  5477.984,
+                    "bytes":  28292398,
+                    "sha256":  "2B7E20708375BBC28DDD08FABEAC4E838BD3D04DFB05D0A015B5EC29EB52280C",
+                    "file":  "audio/juz-027.m4a"
+                },
+                {
+                    "juz":  28,
+                    "firstVerse":  "58:1",
+                    "lastVerse":  "66:12",
+                    "encodedDurationSeconds":  5218.24,
+                    "bytes":  26952779,
+                    "sha256":  "0572F0BDEF4AD5942C1A099663179B35A4DC3099B49BA3AD4FA104626308B705",
+                    "file":  "audio/juz-028.m4a"
+                },
+                {
+                    "juz":  29,
+                    "firstVerse":  "67:1",
+                    "lastVerse":  "77:50",
+                    "encodedDurationSeconds":  5305.248,
+                    "bytes":  27430115,
+                    "sha256":  "24253CBC141D59A769B6B0239B304EF2FFC368A74435E98B18DBF25239016D07",
+                    "file":  "audio/juz-029.m4a"
+                },
+                {
+                    "juz":  30,
+                    "firstVerse":  "78:1",
+                    "lastVerse":  "114:6",
+                    "encodedDurationSeconds":  5324.413,
+                    "bytes":  27494188,
+                    "sha256":  "6EB7B38060339BA3BF58B4ECF4A3B94291A4437C1D466EBFF8FC4D41BE45525D",
+                    "file":  "audio/juz-030.m4a"
+                }
+            ]
+}

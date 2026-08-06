@@ -15,7 +15,7 @@ hosted for free on GitHub Pages out of this one repository:
 
 `index.html` at the root is only a redirect to `quran/`, because the Quran player
 used to live at the root and a shortcut may still point there. `sw.js` at the root
-is a stub that removes the old service worker that was registered at that address.
+is a compatibility worker that keeps those old root shortcuts working offline.
 
 ## The prime directive
 
@@ -50,8 +50,9 @@ This matters: once an app is on her home screen, I cannot ask her to reinstall i
 
 `prayer/` then updates itself: it re-checks on every open, on returning to the
 app, and every 15 minutes; a new version takes over and the page reloads on its
-own. `quran/` deliberately does **not** auto-reload (that would cut the
-recitation off mid-verse) — it installs the update quietly and shows it the next
+own. `quran/` also re-checks on open, foreground, restored connectivity, and
+every 15 minutes, but deliberately does **not** auto-reload (that would cut the
+recitation off mid-verse). It installs quietly and shows the update the next
 time she opens the app.
 
 ## Prayer times data
@@ -99,14 +100,52 @@ never shown as a row.
 
 ## Quran audio
 
-`quran/audio/` holds the recitation as 45 local files (~767 MB): `yaseen.m4a`
-plus `quran-001.m4a` … `quran-044.m4a`, one hour each, mono AAC 40 kbps, from
-Mahmoud Khalil Al-Hussary. They were produced from YouTube sources with
-`yt-dlp` + `ffmpeg`; the script is in `.work/` (gitignored, local only).
+`quran/audio/` holds the recitation as 31 local files (~767 MiB): `yaseen.m4a`
+plus `juz-001.m4a` … `juz-030.m4a`, mono AAC 40 kbps, from Mahmoud Khalil
+Al-Hussary. These are genuine canonical Juz boundaries, not equal-duration
+chunks. `quran/juz-manifest.json` records each first/last verse, duration, size,
+and SHA-256.
+
+The full Quran preserves the exact recording previously published as 44 hourly
+transport chunks. `quran/tools/build-juz.ps1` losslessly stream-cuts those old
+files at acoustically verified verse boundaries; it does not re-encode them.
+The original YouTube sources and old pipeline remain in `.work/` (gitignored),
+and the 44 old files remain recoverable from Git history and the pre-change
+archive described below. Never relabel arbitrary time chunks as Juz.
 
 The app downloads all of it into Cache Storage on first launch, then never needs
 the network. Constraints to respect: GitHub caps files at 100 MB and Pages sites
 at about 1 GB, so do not raise the bitrate or add large files.
+
+## Codex handoff — 6 August 2026
+
+User report: Yasin played, but the complete Quran showed `Problemă la redare —
+apasă din nou pe buton`; the UI also misleadingly called the 44 technical hourly
+chunks “parts.”
+
+Root cause: the July 27 folder-move change left `DIR` undefined in `quran/sw.js`.
+Any audio cache miss threw before the network fallback, so cached Yasin worked
+while an uncached Quran file failed. The fix defines `DIR` from the worker URL,
+bumps `SHELL_CACHE` to `quran-shell-v3`, and moves audio to `quran-audio-v2`.
+Activation preserves cached Yasin, then deletes the obsolete 44-file cache before
+the new 30-Juz download so phones do not briefly need about 1.6 GB.
+
+The player now shows `Juzul N din 30`, advances through 30 real Juz files, and
+migrates a saved position from the old 44-file timeline to the same point in the
+new layout. Exactly two giant buttons remain. The prayer app was deliberately
+left unchanged.
+
+Pre-change safety copies on this machine:
+
+- Full archive: `D:\Library\Other People\Ani - Quran App Archives\Ani-Quran-App-before-Codex-20260806.tar`
+- Archive SHA-256: `74849C65404FEAFEE42A7EB83936B5A295AA2C9685C5DD27790BEB2FC9F1538B`
+- Working copy used for this change: `D:\Library\Other People\Ani - Quran App - Codex Work 20260806`
+
+Important deployment truth: a PWA cannot mutate a phone while it is closed or
+offline. The pushed worker is discovered when each phone next opens/foregrounds
+the app while online; because Quran never force-reloads during recitation, the
+new UI appears on the following open. Leave it open on Wi-Fi until it says
+`✓ Disponibil offline` so all 30 new files finish downloading.
 
 ## How I like to work here
 

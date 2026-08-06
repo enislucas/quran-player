@@ -6,7 +6,7 @@ internet connection.
 
 | Folder | App | Open it |
 |---|---|---|
-| [`quran/`](quran/) | **Coranul** — Quran audio player: two giant buttons (Surah Yaseen, the complete Quran), tap to play, tap again to pause, always resumes exactly where she stopped | https://enislucas.github.io/quran-player/quran/ |
+| [`quran/`](quran/) | **Coranul** — Quran audio player: two giant buttons (Surah Yaseen, the complete Quran in 30 real Juz), tap to play, tap again to pause, always resumes exactly where she stopped | https://enislucas.github.io/quran-player/quran/ |
 | [`prayer/`](prayer/) | **Namaz Vakti** — prayer times for Mangalia: no buttons at all, the prayer window that is open right now glows, today's five windows are listed below | https://enislucas.github.io/quran-player/prayer/ |
 
 Each folder has its own README with setup and day-to-day details.

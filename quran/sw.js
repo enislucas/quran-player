@@ -1,8 +1,10 @@
 // Service worker: precaches the app shell and serves downloaded audio from
 // the cache (with HTTP Range support, which <audio> needs for seeking).
 // Audio files are downloaded and cached by the page itself (see index.html).
-const SHELL_CACHE = 'quran-shell-v2';
-const AUDIO_CACHE = 'quran-audio-v1';
+const SHELL_CACHE = 'quran-shell-v3';
+const AUDIO_CACHE = 'quran-audio-v2';
+const LEGACY_AUDIO_CACHE = 'quran-audio-v1';
+const DIR = new URL('./', self.location.href).pathname;
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 
 self.addEventListener('install', (e) => {
@@ -10,12 +12,25 @@ self.addEventListener('install', (e) => {
 });
 
 self.addEventListener('activate', (e) => {
-  e.waitUntil(
-    caches.keys()
-      // only our own caches — Cache Storage is shared with the prayer app
-      .then((keys) => Promise.all(keys.filter((k) => k.startsWith('quran-') && k !== SHELL_CACHE && k !== AUDIO_CACHE).map((k) => caches.delete(k))))
-      .then(() => self.clients.claim())
-  );
+  e.waitUntil((async () => {
+    const keys = await caches.keys();
+    // Preserve the already-downloaded Yaseen file while retiring the old
+    // 44-part Quran cache. The new Juz layout must be downloaded afresh, and
+    // deleting the old set first avoids briefly needing about 1.6 GB.
+    if (keys.includes(LEGACY_AUDIO_CACHE)) {
+      const oldCache = await caches.open(LEGACY_AUDIO_CACHE);
+      const newCache = await caches.open(AUDIO_CACHE);
+      const currentYaseen = new URL('audio/yaseen.m4a', self.location.href).href;
+      const legacyYaseen = new URL('../audio/yaseen.m4a', self.location.href).href;
+      const cachedYaseen = (await oldCache.match(currentYaseen)) || (await oldCache.match(legacyYaseen));
+      if (cachedYaseen) await newCache.put(currentYaseen, cachedYaseen.clone());
+    }
+    // Only our own caches — Cache Storage is shared with the prayer app.
+    await Promise.all(keys
+      .filter((k) => k.startsWith('quran-') && k !== SHELL_CACHE && k !== AUDIO_CACHE)
+      .map((k) => caches.delete(k)));
+    await self.clients.claim();
+  })());
 });
 
 self.addEventListener('fetch', (e) => {

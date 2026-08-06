@@ -11,7 +11,7 @@ The interface is entirely in Romanian, since that's what she reads.
 
 ## It works fully offline
 
-This app does not use YouTube or stream from the internet during normal listening. The audio lives as actual files inside the app itself. The first time the app is opened, it automatically downloads all the audio to the phone's storage. While that's happening, a small line under the title shows progress in Romanian, e.g. "Se descarcă pentru offline: 12 din 45", and it changes to "✓ Disponibil offline" once everything is downloaded.
+This app does not use YouTube or stream from the internet during normal listening. The audio lives as actual files inside the app itself. The first time the app is opened, it automatically downloads all the audio to the phone's storage. While that's happening, a small line under the title shows progress in Romanian, e.g. "Se descarcă pentru offline: 12 din 31", and it changes to "✓ Disponibil offline" once everything is downloaded.
 
 **Important — one-time setup step:** the first time the app is used, open it while connected to Wi-Fi and leave it open until that checkmark appears. It downloads about 770 MB total, so the phone needs roughly 1 GB of free space. After that one-time download, the app plays with no internet connection at all.
 
@@ -27,9 +27,11 @@ Because playback now uses real audio files instead of a YouTube embed, the audio
 - `icon-192.png`, `icon-512.png`, `apple-touch-icon.png` — app icons.
 - `audio/` — the actual audio files:
   - `audio/yaseen.m4a` — Surah Yaseen.
-  - `audio/quran-001.m4a` through `audio/quran-044.m4a` — the complete 43-hour recitation, split into roughly one-hour chunks (~18 MB each, mono AAC at 40 kbps) so they download smoothly. All chunks together total about 770 MB.
+  - `audio/juz-001.m4a` through `audio/juz-030.m4a` — the complete 43-hour recitation, split at the 30 real Juz boundaries (~23–30 MB each, mono AAC at 40 kbps). All files together total about 770 MB.
+- `juz-manifest.json` — provenance, first/last verse, duration, size, and SHA-256 for every Juz file.
+- `tools/build-juz.ps1` — reproducibly makes the 30 lossless Juz files from the original 44 transport chunks when those source files are restored from Git history.
 
-The `.work/` folder is a local build area only, and it's gitignored (not part of the published site). It contains `pipeline.sh`, the script used to download the original audio from YouTube with `yt-dlp`, re-encode it with `ffmpeg`, and split it into the hourly chunks above. Re-run it if the source audio ever needs to be regenerated.
+The `.work/` folder is a local build area only, and it is gitignored. It retains the original YouTube downloads and the old encoding pipeline. The published 30-Juz files preserve that exact Mahmoud Khalil Al-Hussary recording: `tools/build-juz.ps1` stream-copies it at acoustically verified canonical boundaries, with no extra lossy re-encoding.
 
 ## Where it lives
 
@@ -74,6 +76,6 @@ Either way, this adds a normal-looking app icon to the home screen — no browse
 
 To swap out the audio, replace the relevant files inside the `audio/` folder (keeping the same file names, or updating the code to match new ones).
 
-If the number of hourly chunks for the complete Quran recitation ever changes (currently 44, named `quran-001.m4a` through `quran-044.m4a`), update the `QURAN_SEGMENTS = 44` constant near the top of the script in `index.html` to match.
+The complete recitation must remain 30 genuine Juz, named `juz-001.m4a` through `juz-030.m4a`. Do not relabel arbitrary time chunks as Juz. The boundary source data and file checksums are in `juz-manifest.json` and `tools/build-juz.ps1`.
 
-`.work/pipeline.sh` can regenerate all of the audio from scratch given the original YouTube source URLs — it re-downloads with `yt-dlp`, re-encodes with `ffmpeg`, and re-splits into the hourly chunks described above.
+If the underlying recording is regenerated, first reproduce the old 44 transport chunks with `.work/pipeline.sh`, then run `powershell -ExecutionPolicy Bypass -File quran/tools/build-juz.ps1 -ForceRebuild` from the repository root.
