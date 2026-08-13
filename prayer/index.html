@@ -160,6 +160,7 @@ body::before{
   padding:8px 14px;cursor:pointer;white-space:nowrap;
 }
 .install button:active{transform:translateY(1px)}
+.install span{min-width:0;overflow-wrap:anywhere}
 </style>
 </head>
 <body>
@@ -423,38 +424,60 @@ document.addEventListener('visibilitychange', () => {
 });
 window.addEventListener('online', checkForUpdates);
 
-// ---------- one-tap install (Android) / hint (iPhone) ----------
-// Only appears in a browser where the app is NOT yet installed; once it is on
-// the home screen it never shows again. It is here purely so people the link
-// is shared with can install in one tap rather than hunting through menus.
-(function () {
+// ---------- install offer ----------
+// Shown to ANYONE who opens the app in a browser without it installed, so a
+// shared link turns into a real installed app in as few taps as possible.
+// It is NOT gated on Chrome's unreliable beforeinstallprompt event: it appears
+// regardless, and upgrades to a true one-tap install when the browser offers
+// it. Never shows inside the installed app (standalone), hidden for good once
+// installed. The key is per-app because both apps share this origin.
+installOffer('prayer-installed');
+function installOffer(KEY) {
   const bar = $('install'), btn = $('installBtn'), msg = $('installMsg');
   if (!bar) return;
-  const installed = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
-  if (installed) return;
+  const standalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+  if (standalone) { try { localStorage.setItem(KEY, '1'); } catch (e) {} return; }
+  try { if (localStorage.getItem(KEY) === '1') return; } catch (e) {}
+
+  const ua = navigator.userAgent;
+  const isIOS = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const isAndroid = /Android/.test(ua);
   let deferred = null;
+
+  const reveal = (text, withBtn) => {
+    if (text != null) msg.textContent = text;
+    btn.classList.toggle('hidden', !withBtn);
+    bar.classList.remove('hidden');
+  };
+  const markInstalled = () => { try { localStorage.setItem(KEY, '1'); } catch (e) {} bar.classList.add('hidden'); };
+
   window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
     deferred = e;
-    bar.classList.remove('hidden');
+    reveal('Adaugă aplicația pe telefon', true);
   });
+  window.addEventListener('appinstalled', markInstalled);
+
   btn.addEventListener('click', async () => {
-    if (!deferred) return;
-    btn.disabled = true;
-    deferred.prompt();
-    try { await deferred.userChoice; } catch (e) {}
-    deferred = null;
-    bar.classList.add('hidden');
+    if (deferred) {
+      btn.disabled = true;
+      deferred.prompt();
+      let outcome = '';
+      try { outcome = (await deferred.userChoice).outcome; } catch (e) {}
+      deferred = null; btn.disabled = false;
+      if (outcome === 'accepted') markInstalled(); else bar.classList.add('hidden');
+    } else {
+      reveal(isAndroid ? 'Deschide meniul ⋮ din colț, apoi „Instalează aplicația”.'
+                       : 'În meniul browserului alege „Instalează aplicația”.', false);
+    }
   });
-  window.addEventListener('appinstalled', () => bar.classList.add('hidden'));
-  const ua = navigator.userAgent;
-  const isIOS = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
   if (isIOS) {
-    msg.textContent = 'Instalare: apasă Partajează, apoi „Adaugă pe ecranul principal”';
-    btn.classList.add('hidden');
-    bar.classList.remove('hidden');
+    reveal('Instalare: apasă Partajează, apoi „Adaugă pe ecranul principal”.', false);
+  } else {
+    reveal('Adaugă aplicația pe telefon', true);
   }
-})();
+}
 
 if ('serviceWorker' in navigator && location.protocol === 'https:') {
   let controlled = !!navigator.serviceWorker.controller;

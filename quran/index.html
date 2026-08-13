@@ -56,6 +56,7 @@ body{
   padding:9px 16px;cursor:pointer;white-space:nowrap;
 }
 .install button:active{transform:translateY(1px)}
+.install span{min-width:0;overflow-wrap:anywhere}
 </style>
 </head>
 <body>
@@ -360,40 +361,63 @@ window.addEventListener('online', ensureOfflineAudio);
 setButtonsUI(false);
 ensureOfflineAudio();
 
-// ---------- one-tap install (Android) / hint (iPhone) ----------
-// Only ever appears in a browser tab where the app is NOT yet installed.
-// Grandma's phone already has it installed, so this never shows for her —
-// the two giant buttons remain the whole app. It exists so people she shares
-// the link with can install it in one tap instead of hunting through menus.
-(function () {
+// ---------- install offer ----------
+// Shown to ANYONE who opens the app in a browser without it installed, so a
+// shared link turns into a real installed app in as few taps as possible.
+// It is NOT gated on Chrome's unreliable beforeinstallprompt event: it appears
+// regardless, and simply upgrades to a true one-tap install when the browser
+// offers it. Never shows inside the installed app (standalone), and stays
+// hidden for good once installed. Grandma uses the installed app -> never sees
+// it, so the "two giant buttons only" rule is untouched for her.
+installOffer('quran-installed');
+function installOffer(KEY) {
   const bar = $('install'), btn = $('installBtn'), msg = $('installMsg');
   if (!bar) return;
-  const installed = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
-  if (installed) return;                 // already an installed app: stay invisible
-  let deferred = null;
-  window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault();                  // keep Chrome's own mini-bar from popping up
-    deferred = e;
-    bar.classList.remove('hidden');      // reveal our button instead
-  });
-  btn.addEventListener('click', async () => {
-    if (!deferred) return;
-    btn.disabled = true;
-    deferred.prompt();
-    try { await deferred.userChoice; } catch (e) {}
-    deferred = null;
-    bar.classList.add('hidden');
-  });
-  window.addEventListener('appinstalled', () => bar.classList.add('hidden'));
-  // iPhones/iPads have no install prompt at all — show the manual steps instead
+  const standalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+  if (standalone) { try { localStorage.setItem(KEY, '1'); } catch (e) {} return; }
+  try { if (localStorage.getItem(KEY) === '1') return; } catch (e) {}
+
   const ua = navigator.userAgent;
   const isIOS = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-  if (isIOS) {
-    msg.textContent = 'Instalare: apasă Partajează, apoi „Adaugă pe ecranul principal”';
-    btn.classList.add('hidden');
+  const isAndroid = /Android/.test(ua);
+  let deferred = null;
+
+  const reveal = (text, withBtn) => {
+    if (text != null) msg.textContent = text;
+    btn.classList.toggle('hidden', !withBtn);
     bar.classList.remove('hidden');
+  };
+  const markInstalled = () => { try { localStorage.setItem(KEY, '1'); } catch (e) {} bar.classList.add('hidden'); };
+
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferred = e;                                    // a real one-tap install is now possible
+    reveal('Adaugă aplicația pe telefon', true);
+  });
+  window.addEventListener('appinstalled', markInstalled);
+
+  btn.addEventListener('click', async () => {
+    if (deferred) {
+      btn.disabled = true;
+      deferred.prompt();
+      let outcome = '';
+      try { outcome = (await deferred.userChoice).outcome; } catch (e) {}
+      deferred = null; btn.disabled = false;
+      if (outcome === 'accepted') markInstalled(); else bar.classList.add('hidden');
+    } else {
+      // browser gave us no programmatic prompt: show the manual menu steps
+      reveal(isAndroid ? 'Deschide meniul ⋮ din colț, apoi „Instalează aplicația”.'
+                       : 'În meniul browserului alege „Instalează aplicația”.', false);
+    }
+  });
+
+  // What everyone sees immediately, with or without a one-tap prompt:
+  if (isIOS) {
+    reveal('Instalare: apasă Partajează, apoi „Adaugă pe ecranul principal”.', false);
+  } else {
+    reveal('Adaugă aplicația pe telefon', true);
   }
-})();
+}
 
 if ('serviceWorker' in navigator && location.protocol === 'https:') {
   // No auto-reload here: a reload would cut the recitation off mid-verse.
