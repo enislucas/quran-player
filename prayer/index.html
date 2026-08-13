@@ -162,7 +162,7 @@ body::before{
 }
 .install button:active{transform:translateY(1px)}
 .install span{min-width:0;overflow-wrap:anywhere}
-.install .install-x{position:absolute;top:5px;right:8px;background:transparent;border:none;color:inherit;font-size:16px;font-weight:800;line-height:1;padding:4px 8px;opacity:.7;cursor:pointer;white-space:nowrap}
+.install .install-x{position:absolute;top:2px;right:2px;background:transparent;border:none;color:inherit;font-size:18px;font-weight:800;line-height:1;padding:10px 14px;opacity:.75;cursor:pointer;white-space:nowrap}
 </style>
 </head>
 <body>
@@ -448,19 +448,20 @@ function installOffer(KEY) {
   const ua = navigator.userAgent;
   const isIOS = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   const isAndroid = /Android/.test(ua);
-  let deferred = null;
+  let deferred = null, dismissed = false;
 
   const reveal = (text, withBtn) => {
     if (text != null) msg.textContent = text;
     btn.classList.toggle('hidden', !withBtn);
     bar.classList.remove('hidden');
   };
-  const markInstalled = () => { try { localStorage.setItem(KEY, '1'); } catch (e) {} bar.classList.add('hidden'); };
+  const markInstalled = () => { dismissed = true; try { localStorage.setItem(KEY, '1'); } catch (e) {} bar.classList.add('hidden'); };
 
   window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
     deferred = e;
-    reveal('Adaugă aplicația pe telefon', true);
+    // don't resurrect the bar if it was already dismissed a moment ago
+    if (!dismissed) reveal('Adaugă aplicația pe telefon', true);
   });
   window.addEventListener('appinstalled', markInstalled);
   // a "×" so anyone can dismiss the offer for good (e.g. already installed via
