@@ -493,10 +493,19 @@ function installOffer(KEY) {
     reveal(browserSteps(), false);
   });
 
-  if (isIOS) {
-    reveal('Instalare: apasă Partajează, apoi „Adaugă pe ecranul principal”.', false);
+  function showDefault() {
+    if (dismissed) return;
+    if (isIOS) reveal('Instalare: apasă Partajează, apoi „Adaugă pe ecranul principal”.', false);
+    else reveal('Adaugă aplicația pe telefon', true);
+  }
+  // On Android/Chromium this detects the app is already installed even from a
+  // normal browser tab (which display-mode cannot see), and then never offers it.
+  if (navigator.getInstalledRelatedApps) {
+    navigator.getInstalledRelatedApps()
+      .then((apps) => { if (apps && apps.length) markInstalled(); else showDefault(); })
+      .catch(showDefault);
   } else {
-    reveal('Adaugă aplicația pe telefon', true);
+    showDefault();
   }
 }
 

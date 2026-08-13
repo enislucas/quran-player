@@ -9,6 +9,10 @@
   "orientation": "portrait",
   "background_color": "#f5efe3",
   "theme_color": "#0f3d2e",
+  "prefer_related_applications": false,
+  "related_applications": [
+    { "platform": "webapp", "url": "https://enislucas.github.io/quran-player/quran/manifest.webmanifest" }
+  ],
   "icons": [
     { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
     { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
