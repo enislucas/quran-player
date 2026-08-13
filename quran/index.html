@@ -396,19 +396,28 @@ function installOffer(KEY) {
   });
   window.addEventListener('appinstalled', markInstalled);
 
+  // Exact manual steps, since the menu differs by browser. Used whenever the
+  // browser gives us no one-tap prompt (very common on a first visit).
+  function browserSteps() {
+    const u = navigator.userAgent;
+    if (isIOS) return 'Apasă butonul Partajează din Safari, apoi „Adaugă pe ecranul principal”.';
+    if (/SamsungBrowser/i.test(u)) return 'Deschide meniul ≡ de jos, apoi „Adaugă pagina la” → „Ecran principal”.';
+    if (/Firefox|FxiOS/i.test(u)) return 'Deschide meniul ⋮, apoi „Instalează”.';
+    if (isAndroid) return 'Deschide meniul ⋮ din dreapta sus, apoi „Instalează aplicația” (sau „Adaugă la ecranul principal”).';
+    return 'În meniul browserului alege „Instalează aplicația”.';
+  }
   btn.addEventListener('click', async () => {
     if (deferred) {
-      btn.disabled = true;
-      deferred.prompt();
-      let outcome = '';
-      try { outcome = (await deferred.userChoice).outcome; } catch (e) {}
-      deferred = null; btn.disabled = false;
-      if (outcome === 'accepted') markInstalled(); else bar.classList.add('hidden');
-    } else {
-      // browser gave us no programmatic prompt: show the manual menu steps
-      reveal(isAndroid ? 'Deschide meniul ⋮ din colț, apoi „Instalează aplicația”.'
-                       : 'În meniul browserului alege „Instalează aplicația”.', false);
+      const p = deferred; deferred = null;
+      try {
+        p.prompt();
+        const res = await p.userChoice;
+        if (res && res.outcome === 'accepted') { markInstalled(); return; }
+        bar.classList.add('hidden');
+        return;
+      } catch (e) { /* prompt failed — fall through to manual steps */ }
     }
+    reveal(browserSteps(), false);
   });
 
   // What everyone sees immediately, with or without a one-tap prompt:
