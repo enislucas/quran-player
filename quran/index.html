@@ -45,12 +45,27 @@ body{
 .btn-yaseen{background:#0e6b4e}
 .btn-quran{background:#8a5b12;font-size:clamp(28px,7vw,46px)}
 .big-btn.playing{background:#a63d2a}
+.install{
+  flex:0 0 auto;display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;
+  background:#0e6b4e;color:#fff;border-radius:16px;
+  padding:12px 14px;font-size:clamp(15px,4vw,20px);font-weight:700;text-align:center;
+}
+.install button{
+  border:none;border-radius:12px;background:#fff;color:#0e6b4e;
+  font-family:inherit;font-weight:800;font-size:inherit;
+  padding:9px 16px;cursor:pointer;white-space:nowrap;
+}
+.install button:active{transform:translateY(1px)}
 </style>
 </head>
 <body>
 
 <main class="screen">
   <h1 class="app-title">Coranul</h1>
+  <div id="install" class="install hidden">
+    <span id="installMsg">Adaugă aplicația pe telefon</span>
+    <button id="installBtn" type="button">📲 Instalează</button>
+  </div>
   <div id="dlStatus" class="dl hidden"></div>
   <div id="msg" class="msg hidden"></div>
   <button id="btnYaseen" class="big-btn btn-yaseen">
@@ -344,6 +359,41 @@ window.addEventListener('online', ensureOfflineAudio);
 
 setButtonsUI(false);
 ensureOfflineAudio();
+
+// ---------- one-tap install (Android) / hint (iPhone) ----------
+// Only ever appears in a browser tab where the app is NOT yet installed.
+// Grandma's phone already has it installed, so this never shows for her —
+// the two giant buttons remain the whole app. It exists so people she shares
+// the link with can install it in one tap instead of hunting through menus.
+(function () {
+  const bar = $('install'), btn = $('installBtn'), msg = $('installMsg');
+  if (!bar) return;
+  const installed = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+  if (installed) return;                 // already an installed app: stay invisible
+  let deferred = null;
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();                  // keep Chrome's own mini-bar from popping up
+    deferred = e;
+    bar.classList.remove('hidden');      // reveal our button instead
+  });
+  btn.addEventListener('click', async () => {
+    if (!deferred) return;
+    btn.disabled = true;
+    deferred.prompt();
+    try { await deferred.userChoice; } catch (e) {}
+    deferred = null;
+    bar.classList.add('hidden');
+  });
+  window.addEventListener('appinstalled', () => bar.classList.add('hidden'));
+  // iPhones/iPads have no install prompt at all — show the manual steps instead
+  const ua = navigator.userAgent;
+  const isIOS = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  if (isIOS) {
+    msg.textContent = 'Instalare: apasă Partajează, apoi „Adaugă pe ecranul principal”';
+    btn.classList.add('hidden');
+    bar.classList.remove('hidden');
+  }
+})();
 
 if ('serviceWorker' in navigator && location.protocol === 'https:') {
   // No auto-reload here: a reload would cut the recitation off mid-verse.

@@ -1,7 +1,7 @@
 // Service worker: precaches the app shell and serves downloaded audio from
 // the cache (with HTTP Range support, which <audio> needs for seeking).
 // Audio files are downloaded and cached by the page itself (see index.html).
-const SHELL_CACHE = 'quran-shell-v3';
+const SHELL_CACHE = 'quran-shell-v4';
 const AUDIO_CACHE = 'quran-audio-v2';
 const LEGACY_AUDIO_CACHE = 'quran-audio-v1';
 const DIR = new URL('./', self.location.href).pathname;

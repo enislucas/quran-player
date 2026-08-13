@@ -4,7 +4,7 @@
 // The page checks for a new worker on every open (and every 15 minutes while
 // open); a new worker installs, takes over immediately, and the page reloads
 // itself. There is nothing to interrupt, so this is always safe.
-const CACHE_VERSION = 'prayer-v4';
+const CACHE_VERSION = 'prayer-v5';
 const SHELL = ['./', './index.html', './times.json', './manifest.webmanifest',
                './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 const DIR = location.pathname.replace(/[^/]*$/, '');   // e.g. /quran-player/prayer/

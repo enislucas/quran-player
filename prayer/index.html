@@ -147,11 +147,28 @@ body::before{
 @media (prefers-reduced-motion:reduce){
   .now,.now::after{animation:none}
 }
+.install{
+  flex:0 0 auto;display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;
+  margin-bottom:12px;
+  background:rgba(255,206,120,.10);border:1.5px solid rgba(255,206,120,.5);
+  color:#ffd489;border-radius:16px;
+  padding:10px 14px;font-size:clamp(14px,3.8vw,18px);font-weight:700;text-align:center;
+}
+.install button{
+  border:none;border-radius:12px;background:#ffce78;color:#101b3a;
+  font-family:inherit;font-weight:800;font-size:inherit;
+  padding:8px 14px;cursor:pointer;white-space:nowrap;
+}
+.install button:active{transform:translateY(1px)}
 </style>
 </head>
 <body>
 
 <main class="screen">
+  <div id="install" class="install hidden">
+    <span id="installMsg">Adaugă aplicația pe telefon</span>
+    <button id="installBtn" type="button">📲 Instalează</button>
+  </div>
   <section class="now" id="now">
     <div class="label" id="label">ACUM</div>
     <div class="name" id="name">—</div>
@@ -405,6 +422,39 @@ document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') { lastPaint = ''; paint(); syncClock(); checkForUpdates(); }
 });
 window.addEventListener('online', checkForUpdates);
+
+// ---------- one-tap install (Android) / hint (iPhone) ----------
+// Only appears in a browser where the app is NOT yet installed; once it is on
+// the home screen it never shows again. It is here purely so people the link
+// is shared with can install in one tap rather than hunting through menus.
+(function () {
+  const bar = $('install'), btn = $('installBtn'), msg = $('installMsg');
+  if (!bar) return;
+  const installed = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+  if (installed) return;
+  let deferred = null;
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferred = e;
+    bar.classList.remove('hidden');
+  });
+  btn.addEventListener('click', async () => {
+    if (!deferred) return;
+    btn.disabled = true;
+    deferred.prompt();
+    try { await deferred.userChoice; } catch (e) {}
+    deferred = null;
+    bar.classList.add('hidden');
+  });
+  window.addEventListener('appinstalled', () => bar.classList.add('hidden'));
+  const ua = navigator.userAgent;
+  const isIOS = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  if (isIOS) {
+    msg.textContent = 'Instalare: apasă Partajează, apoi „Adaugă pe ecranul principal”';
+    btn.classList.add('hidden');
+    bar.classList.remove('hidden');
+  }
+})();
 
 if ('serviceWorker' in navigator && location.protocol === 'https:') {
   let controlled = !!navigator.serviceWorker.controller;

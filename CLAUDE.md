@@ -38,6 +38,14 @@ Concretely:
 - Both apps must work **fully offline** — assume her phone has no data.
 - Text is deliberately enormous. Keep it that way.
 
+Each app also has a small **"Instalează" bar** at the top (`#install`). It is
+**not** a third control: it only appears in a *browser* tab where the app is not
+yet installed, and disappears for good once the app is on the home screen — so
+the person using the installed app never sees it. It exists only so someone the
+link is shared with can install in one tap (Android) or gets the manual steps
+(iPhone). Don't remove it thinking it violates the rules above; for her, nothing
+changed.
+
 ## How an update reaches her phone
 
 This matters: once an app is on her home screen, I cannot ask her to reinstall it.
