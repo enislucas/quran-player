@@ -46,9 +46,10 @@ body{
 .btn-quran{background:#8a5b12;font-size:clamp(28px,7vw,46px)}
 .big-btn.playing{background:#a63d2a}
 .install{
+  position:relative;
   flex:0 0 auto;display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;
   background:#0e6b4e;color:#fff;border-radius:16px;
-  padding:12px 14px;font-size:clamp(15px,4vw,20px);font-weight:700;text-align:center;
+  padding:12px 40px;font-size:clamp(15px,4vw,20px);font-weight:700;text-align:center;
 }
 .install button{
   border:none;border-radius:12px;background:#fff;color:#0e6b4e;
@@ -57,6 +58,7 @@ body{
 }
 .install button:active{transform:translateY(1px)}
 .install span{min-width:0;overflow-wrap:anywhere}
+.install .install-x{position:absolute;top:6px;right:8px;background:transparent;border:none;color:inherit;font-size:16px;font-weight:800;line-height:1;padding:4px 8px;opacity:.7;cursor:pointer;white-space:nowrap}
 </style>
 </head>
 <body>
@@ -66,6 +68,7 @@ body{
   <div id="install" class="install hidden">
     <span id="installMsg">Adaugă aplicația pe telefon</span>
     <button id="installBtn" type="button">📲 Instalează</button>
+    <button id="installX" type="button" class="install-x" aria-label="Închide">✕</button>
   </div>
   <div id="dlStatus" class="dl hidden"></div>
   <div id="msg" class="msg hidden"></div>
@@ -373,7 +376,10 @@ installOffer('quran-installed');
 function installOffer(KEY) {
   const bar = $('install'), btn = $('installBtn'), msg = $('installMsg');
   if (!bar) return;
-  const standalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+  // Treat every "installed app" display mode as installed, not just standalone:
+  // Samsung/older installs can open as minimal-ui. If it looks installed, never
+  // show the offer and remember it so later browser visits stay quiet too.
+  const standalone = ['standalone', 'minimal-ui', 'fullscreen'].some((m) => matchMedia('(display-mode: ' + m + ')').matches) || navigator.standalone === true;
   if (standalone) { try { localStorage.setItem(KEY, '1'); } catch (e) {} return; }
   try { if (localStorage.getItem(KEY) === '1') return; } catch (e) {}
 
@@ -395,6 +401,10 @@ function installOffer(KEY) {
     reveal('Adaugă aplicația pe telefon', true);
   });
   window.addEventListener('appinstalled', markInstalled);
+  // a "×" so anyone can dismiss the offer for good (e.g. already installed via
+  // a home-screen shortcut we can't detect) — it never nags again after that
+  const closeBtn = $('installX');
+  if (closeBtn) closeBtn.addEventListener('click', markInstalled);
 
   // Exact manual steps, since the menu differs by browser. Used whenever the
   // browser gives us no one-tap prompt (very common on a first visit).
